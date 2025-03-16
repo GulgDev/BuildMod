@@ -1,0 +1,31 @@
+export declare class Navigation {
+    private loginPage;
+    private gamePage;
+    private levelPage;
+    private nameChangePage;
+    private menuPage;
+    private accountPage;
+    private mapsPage;
+    private levelsPage;
+    private guidePage;
+    private settingsPage;
+    private performancePage;
+    private static authGoogle;
+    private static setLanguege;
+    private startGameAction;
+    private reloadLoginPage;
+    start(): void;
+    private goToLogin;
+    private goToGame;
+    private goToPerformance;
+    private goToNameChange;
+    private goToLevel;
+    private goToPath;
+    private removePages;
+    private goToAccount;
+    private goToMaps;
+    private goToLevels;
+    private goToGuide;
+    private goToSettings;
+    private doMenuAction;
+}

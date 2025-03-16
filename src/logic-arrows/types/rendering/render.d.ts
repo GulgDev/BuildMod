@@ -1,0 +1,38 @@
+export declare class Render {
+    private readonly ARROW_TYPES_COUNT;
+    private readonly gl;
+    private positionBuffer;
+    private indexBuffer;
+    private arrowShader;
+    private backgroundShader;
+    private solidColorShader;
+    private textureShader;
+    private arrowAtlas;
+    private backgroundTexture;
+    private backgroundFrameBuffer;
+    private lastArrowType;
+    private lastArrowSignal;
+    private lastArrowRotation;
+    private lastArrowFlipped;
+    constructor(gl: WebGLRenderingContext);
+    resize(width: number, height: number): void;
+    prepareArrows(size: number): void;
+    prepareTextures(texture: WebGLTexture | null, tiles?: number): void;
+    disableTextures(): void;
+    setArrowAlpha(alpha: number): void;
+    disableArrows(): void;
+    prepareSolidColor(): void;
+    disableSolidColor(): void;
+    setSolidColor(red: number, green: number, blue: number, alpha: number): void;
+    drawSolidColor(x: number, y: number, width: number, height: number): void;
+    drawArrow(x: number, y: number, type: number, signal: number, rotation: number, flipped: boolean): void;
+    drawBackground(scale: number, offset: [number, number]): void;
+    drawTexture(x: number, y: number, size: number): void;
+    createArrowTexture(image: HTMLImageElement): void;
+    dispose(): void;
+    private initBuffers;
+    private initBackgroundTexture;
+    private drawBackgroundOrigin;
+    private prepareBackgroundOrigin;
+    private disableBackgroundOrigin;
+}

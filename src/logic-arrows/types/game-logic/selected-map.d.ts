@@ -1,0 +1,30 @@
+import { Arrow } from './arrow';
+import { GameMap } from './game-map';
+export declare class SelectedMap {
+    private selectedArrows;
+    private arrowsToPutOriginal;
+    private arrowsToPut;
+    private currentSelectedArrows;
+    private currentSelectionFirstPoint;
+    private currentSelectionSecondPoint;
+    private rotationState;
+    private flipState;
+    private tempMap;
+    constructor();
+    select(x: number, y: number): void;
+    deselect(x: number, y: number): void;
+    clearCurrentSelection(): void;
+    clear(): void;
+    getSelectedArrows(): string[];
+    getCount(): number;
+    updateSelectionFromCurrentSelection(): void;
+    updateCurrentSelectedArea(mouseX: number, mouseY: number): void;
+    updateMouseSelection(gameMap: GameMap, mouseFloatX: number, mouseFloatY: number, shift: boolean): void;
+    getCurrentSelectedArea(): [number, number, number, number] | undefined;
+    setArrow(type: number): void;
+    copyFromGameMap(gameMap: GameMap): string;
+    pasteFromText(text: string, onPaste: () => void, onError: () => void): void;
+    getCopiedArrows(): Map<string, Arrow>;
+    rotateOrFlipArrows(rotation: number | null, flip: boolean): void;
+    dispose(): void;
+}
