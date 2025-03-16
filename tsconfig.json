@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "rootDir": "./src/",
+        "outDir": "./dist/",
+        "noImplicitAny": true,
+        "module": "esnext",
+        "target": "esnext",
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "useDefineForClassFields": false,
+        "esModuleInterop": true,
+        "moduleResolution": "node10"
+    },
+    "include": ["./src/**/*"]
+}
