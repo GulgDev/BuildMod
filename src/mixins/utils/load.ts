@@ -1,3 +1,4 @@
+import { MapEntity } from "engine/entitites/map-entity";
 import { Arrow, Chunk, GameMap } from "logic-arrows";
 import { mixin } from "mixin";
 
@@ -32,5 +33,13 @@ mixin("load", () => (map: GameMap, buffer: number[]): void => {
                 arrow.flipped = (rotation & 0x4) !== 0;
             }
         }
+    }
+
+    buffer = buffer.slice(index);
+    let entityCount = buffer.shift();
+    entityCount |= buffer.shift() << 8;
+    for (let i = 0; i < entityCount; i++) {
+        const entity = MapEntity.deserialize(map, buffer);
+        if (entity) map.entities.add(entity);
     }
 });

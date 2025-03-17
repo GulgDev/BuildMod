@@ -2,14 +2,10 @@ import { CELL_SIZE, CHUNK_SIZE, Arrow, Chunk, ChunkUpdates, PlayerSettings, Rend
 import { mixin } from "mixin";
 
 mixin("Game", (Game) => class extends Game {
-    draw(): void {
+    public draw(): void {
         this.updateFocus();
         const render: Render = this["render"];
-        if (this.drawPastedArrows || this.selectedMap.getSelectedArrows().length !== 0) this.screenUpdated = true;
-        if (PlayerSettings.framesToUpdate[this.updateSpeedLevel] > 1) this.screenUpdated = true;
-        if (this.screenUpdated) {
-            render.drawBackground(this.scale, [-this.offset[0] / CELL_SIZE, -this.offset[1] / CELL_SIZE]);
-        }
+        render.drawBackground(this.scale, [-this.offset[0] / CELL_SIZE, -this.offset[1] / CELL_SIZE]);
         const arrowSize: number = this.scale;
         render.prepareArrows(arrowSize);
         const intOffsetX: number = ~~(-this.offset[0] / CELL_SIZE / 16) - 1;
@@ -27,13 +23,11 @@ mixin("Game", (Game) => class extends Game {
                 for (let j: number = 0; j < CHUNK_SIZE; j++) {
                     const arrow: Arrow = chunk.getArrow(i, j);
                     if (arrow.type > 0) {
-                        if (this.screenUpdated || ChunkUpdates.wasArrowChanged(arrow)) {
-                            const arrowX: number = chunk.x * CHUNK_SIZE + i;
-                            const arrowY: number = chunk.y * CHUNK_SIZE + j;
-                            const x: number = arrowX * this.scale + arrowOffsetX;
-                            const y: number = arrowY * this.scale + arrowOffsetY;
-                            render.drawArrow(x, y, arrow.type, arrow.signal, arrow.rotation, arrow.flipped, (arrowX + arrowY + 1) % 2);
-                        }
+                        const arrowX: number = chunk.x * CHUNK_SIZE + i;
+                        const arrowY: number = chunk.y * CHUNK_SIZE + j;
+                        const x: number = arrowX * this.scale + arrowOffsetX;
+                        const y: number = arrowY * this.scale + arrowOffsetY;
+                        render.drawArrow(x, y, arrow.type, arrow.signal, arrow.rotation, arrow.flipped, (arrowX + arrowY + 1) % 2);
                     }
                 }
             }
@@ -41,7 +35,6 @@ mixin("Game", (Game) => class extends Game {
         if (this.drawPastedArrows) {
             render.setArrowAlpha(0.5);
             const selectedArrows: Map<string, Arrow> = this.selectedMap.getCopiedArrows();
-            if (selectedArrows.size !== 0) this.screenUpdated = true;
             selectedArrows.forEach((arrow: Arrow, key: string) => {
                 const [arrowX, arrowY] = key.split(',').map((value: string) => parseInt(value, 10));
                 let rotatedX: number = arrowX;
@@ -88,7 +81,8 @@ mixin("Game", (Game) => class extends Game {
             }
         }
         render.disableSolidColor();
-        this.screenUpdated = false;
+        for (const entity of this.gameMap.entities)
+            entity.draw(this, render);
         this.frame++;
     }
 });

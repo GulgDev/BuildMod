@@ -2,26 +2,24 @@ import { mixin } from "mixin";
 
 declare module "logic-arrows" {
     export interface ArrowShader {
-        checkboardUniform: WebGLUniformLocation | null;
-
         getCheckboardUniform(): WebGLUniformLocation | null;
     }
 }
 
 mixin("ArrowShader", (ArrowShader) => class extends ArrowShader {
-    checkboardUniform: WebGLUniformLocation | null = null;
+    private checkboardUniform: WebGLUniformLocation | null = null;
 
-    updateProgram(gl: WebGLRenderingContext): void {
+    public updateProgram(gl: WebGLRenderingContext): void {
         super.updateProgram(gl);
         if (this.program === null) return;
         this.checkboardUniform = gl.getUniformLocation(this.program, "u_checkboard");
     }
 
-    getCheckboardUniform(): WebGLUniformLocation | null {
+    public getCheckboardUniform(): WebGLUniformLocation | null {
         return this.checkboardUniform;
     }
 
-    makeFragmentShader(): string {
+    public makeFragmentShader(): string {
         return `
         precision lowp float;
 

@@ -1,1 +1,9 @@
-import "./**/*.ts";
+import "./game-logic/game-map";
+import "./player/game";
+import "./player/player-controls";
+import "./player/player-settings";
+import "./rendering/render";
+import "./rendering/shaders/arrow-shader";
+import "./rendering/shaders/background-shader";
+import "./utils/load";
+import "./utils/save";

@@ -1,7 +1,7 @@
 import { mixin } from "mixin";
 
 mixin("BackgroundShader", (BackgroundShader) => class extends BackgroundShader {
-    makeFragmentShader(): string {
+    public makeFragmentShader(): string {
         return `
         precision lowp float;
     

@@ -6,17 +6,9 @@ const path = require("path");
 
 module.exports = {
     entry: "./src/index.ts",
-    module: {
-        rules: [
-            {
-                test: /\.ts$/,
-                use: "glob-import-loader"
-            }
-        ]
-    },
     resolve: {
         extensions: [".ts", ".js"],
-        modules: [path.resolve(__dirname, "./src")]
+        modules: [`...`, path.resolve(__dirname, "./src")]
     },
     output: {
         filename: "bundle.js",
