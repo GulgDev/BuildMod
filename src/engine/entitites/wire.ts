@@ -1,6 +1,7 @@
 import { CELL_SIZE, CHUNK_SIZE, Game, Render } from "logic-arrows";
 import { MapEntity } from "./map-entity";
 import { PathTracer } from "engine/util/path-finder";
+import { NotificationType } from "engine/build-system/notification";
 
 export class Wire extends MapEntity {
     public points: [number, number][] = [];
@@ -48,17 +49,19 @@ export class Wire extends MapEntity {
         }
     }
 
-    build(): void {
+    build(game: Game): void {
         const tracer = new PathTracer(this.gameMap);
         for (let i = 0; i < this.points.length - 1; i++) {
             const [x1, y1] = this.points[i];
             const [x2, y2] = this.points[i + 1];
-            tracer.trace(x1, y1, x2, y2);
+            if (!tracer.trace(x1, y1, x2, y2)) {
+                game.notify(NotificationType.ERROR, x1, y1, "Невозможно добраться до цели");
+                return;
+            }
         }
         const [x, y] = this.points[this.points.length - 1];
-        if (this.gameMap.getArrowType(x, y) === 0) {
+        if (this.gameMap.getArrowType(x, y) === 0)
             this.gameMap.setArrowType(x, y, 23, false);
-        }
     }
 
     draw(game: Game, render: Render): void {

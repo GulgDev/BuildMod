@@ -1,5 +1,6 @@
 import "./game-logic/game-map";
 import "./player/game";
+import "./player/player-access";
 import "./player/player-controls";
 import "./player/player-settings";
 import "./rendering/render";

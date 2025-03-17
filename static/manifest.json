@@ -20,6 +20,7 @@
             "matches": ["https://*.logic-arrows.io/*"],
             "run_at": "document_start",
             "js": ["bundle.js"],
+            "css": ["index.css"],
             "world": "MAIN",
             "all_frames": true
         }

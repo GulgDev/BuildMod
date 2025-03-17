@@ -1,0 +1,43 @@
+.game-overlay {
+    position: absolute;
+}
+
+.notification {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 64px;
+    height: 64px;
+    font-size: 64px;
+    font-family: var(--font);
+    font-weight: bold;
+    border-radius: 100%;
+}
+
+.notification.info {
+    background-color: rgb(60, 60, 194);
+}
+
+.notification.info::after {
+    content: '?';
+    color: white;
+}
+
+.notification.warning {
+    background-color: rgb(241, 169, 35);
+}
+
+.notification.warning::after {
+    content: '!';
+    color: black;
+}
+
+.notification.error {
+    background-color: rgb(224, 14, 14);
+}
+
+.notification.error::after {
+    content: '!';
+    color: white;
+}

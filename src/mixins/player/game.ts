@@ -1,9 +1,49 @@
-import { CELL_SIZE, CHUNK_SIZE, Arrow, Chunk, ChunkUpdates, PlayerSettings, Render } from "logic-arrows";
+import { BuildNotification, NotificationType } from "engine/build-system/notification";
+import { CELL_SIZE, CHUNK_SIZE, Arrow, Chunk, Render } from "logic-arrows";
 import { mixin } from "mixin";
 
+declare module "logic-arrows" {
+    export interface Game {
+        notify(type: NotificationType, x: number, y: number, message: string): void;
+
+        build(): void;
+    }
+}
+
 mixin("Game", (Game) => class extends Game {
+    private readonly overlay: HTMLDivElement;
+
+    private readonly notifications = new Set<BuildNotification>();
+
+    constructor(gl: WebGLRenderingContext, width: number, height: number) {
+        super(gl, width, height);
+        this.overlay = document.createElement("div");
+        this.overlay.className = "game-overlay";
+        document.body.appendChild(this.overlay);
+    }
+
+    public dispose(): void {
+        super.dispose();
+        this.overlay.remove();
+    }
+    
+    public notify(type: NotificationType, x: number, y: number, message: string): void {
+        this.notifications.add(new BuildNotification(this.overlay, type, x * CELL_SIZE, y * CELL_SIZE, message));
+    }
+
+    public build(): void {
+        for (const notification of this.notifications)
+            notification.dispose();
+        this.notifications.clear();
+        for (const entity of this.gameMap.entities)
+            entity.build(this);
+    }
+
     public draw(): void {
         this.updateFocus();
+        this.overlay.style.left = `${~~(this.offset[0] * this.scale / CELL_SIZE + this.scale * 0.025)}px`;
+        this.overlay.style.top = `${~~(this.offset[1] * this.scale / CELL_SIZE + this.scale * 0.025)}px`;
+        this.overlay.style.transform = `scale(${this.scale / CELL_SIZE})`;
         const render: Render = this["render"];
         render.drawBackground(this.scale, [-this.offset[0] / CELL_SIZE, -this.offset[1] / CELL_SIZE]);
         const arrowSize: number = this.scale;

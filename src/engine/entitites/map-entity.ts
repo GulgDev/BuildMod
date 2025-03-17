@@ -15,7 +15,7 @@ export abstract class MapEntity {
 
     abstract serialize(buffer: number[]): void;
 
-    abstract build(): void;
+    abstract build(game: Game): void;
 
     abstract draw(game: Game, render: Render): void;
 }

@@ -119,8 +119,7 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
         const game: Game = this["game"];
         switch (code) {
             case "KeyB":
-                for (const entity of game.gameMap.entities)
-                    entity.build();
+                game.build();
                 break;
         }
     };

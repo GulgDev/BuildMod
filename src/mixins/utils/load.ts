@@ -40,6 +40,6 @@ mixin("load", () => (map: GameMap, buffer: number[]): void => {
     entityCount |= buffer.shift() << 8;
     for (let i = 0; i < entityCount; i++) {
         const entity = MapEntity.deserialize(map, buffer);
-        if (entity) map.entities.add(entity);
+        if (entity)map.entities.add(entity);
     }
 });

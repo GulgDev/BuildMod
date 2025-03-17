@@ -79,25 +79,22 @@ export class PathTracer {
         const key = `${x},${y}`;
         let node = this.nodes.get(key);
         if (!node) {
-            node = {
-                x, y,
-                walkable:
-                    this.gameMap.getArrowType(x, y) === 0 /*&&
-                    !(
-                        checkArrow(this.gameMap.getArrow(x,     y - 1), 1,  -1, 0,  0,  1) ||
-                        checkArrow(this.gameMap.getArrow(x + 1, y),     1,  -1, 0, -1,  0) ||
-                        checkArrow(this.gameMap.getArrow(x,     y + 1), 1,  -1, 0,  0,  1) ||
-                        checkArrow(this.gameMap.getArrow(x - 1, y),     1,  -1, 0,  1,  0) ||
-                        checkArrow(this.gameMap.getArrow(x,     y - 2), 10, -2, 0,  0,  2) ||
-                        checkArrow(this.gameMap.getArrow(x + 1, y - 1), 11, -1, 1, -1,  1) ||
-                        checkArrow(this.gameMap.getArrow(x + 2, y),     10, -2, 0, -2,  0) ||
-                        checkArrow(this.gameMap.getArrow(x + 1, y + 1), 11, -1, 1, -1, -1) ||
-                        checkArrow(this.gameMap.getArrow(x,     y + 2), 10, -2, 0,  0, -2) ||
-                        checkArrow(this.gameMap.getArrow(x - 1, y + 1), 11, -1, 1,  1, -1) ||
-                        checkArrow(this.gameMap.getArrow(x - 2, y),     10, -2, 0,  2,  0) ||
-                        checkArrow(this.gameMap.getArrow(x - 1, y - 1), 11, -1, 1,  1,  1)
-                    )*/
-            };
+            let walkable = this.gameMap.getArrowType(x, y) === 0 /*&&
+            !(
+                checkArrow(this.gameMap.getArrow(x,     y - 1), 1,  -1, 0,  0,  1) ||
+                checkArrow(this.gameMap.getArrow(x + 1, y),     1,  -1, 0, -1,  0) ||
+                checkArrow(this.gameMap.getArrow(x,     y + 1), 1,  -1, 0,  0,  1) ||
+                checkArrow(this.gameMap.getArrow(x - 1, y),     1,  -1, 0,  1,  0) ||
+                checkArrow(this.gameMap.getArrow(x,     y - 2), 10, -2, 0,  0,  2) ||
+                checkArrow(this.gameMap.getArrow(x + 1, y - 1), 11, -1, 1, -1,  1) ||
+                checkArrow(this.gameMap.getArrow(x + 2, y),     10, -2, 0, -2,  0) ||
+                checkArrow(this.gameMap.getArrow(x + 1, y + 1), 11, -1, 1, -1, -1) ||
+                checkArrow(this.gameMap.getArrow(x,     y + 2), 10, -2, 0,  0, -2) ||
+                checkArrow(this.gameMap.getArrow(x - 1, y + 1), 11, -1, 1,  1, -1) ||
+                checkArrow(this.gameMap.getArrow(x - 2, y),     10, -2, 0,  2,  0) ||
+                checkArrow(this.gameMap.getArrow(x - 1, y - 1), 11, -1, 1,  1,  1)
+            )*/ && this.gameMap.getEntities(x, y).length === 0;
+            node = { x, y, walkable };
             this.nodes.set(key, node);
         }
         return node;
@@ -220,7 +217,7 @@ export class PathTracer {
         });
     }
 
-    trace(x1: number, y1: number, x2: number, y2: number): void {
+    trace(x1: number, y1: number, x2: number, y2: number): boolean {
         let sources: [number, number][];
         const arrow = this.gameMap.getArrow(x1, y1);
         switch (arrow?.type) {
@@ -239,6 +236,9 @@ export class PathTracer {
                 sources = [[x1, y1]];
                 break;
         }
-        this.tracePath(this.findPath([x1, y1], sources, [x2, y2]));
+        const path: [number, number][] = this.findPath([x1, y1], sources, [x2, y2]);
+        if (!path) return false;
+        this.tracePath(path);
+        return true;
     }
 }
