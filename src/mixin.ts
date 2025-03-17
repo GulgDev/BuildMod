@@ -1,4 +1,4 @@
-import { LogicArrows } from "./logic-arrows";
+import * as LogicArrows from "./logic-arrows";
 
 const mixins: { [key in keyof typeof LogicArrows]?: (exp: typeof LogicArrows[key]) => any } = {};
 

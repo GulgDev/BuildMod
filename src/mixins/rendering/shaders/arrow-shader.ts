@@ -1,12 +1,10 @@
-import { mixin } from "../../../mixin";
+import { mixin } from "mixin";
 
-declare module "../../../logic-arrows" {
-    namespace LogicArrows {
-        export interface ArrowShader {
-            checkboardUniform: WebGLUniformLocation | null;
+declare module "logic-arrows" {
+    export interface ArrowShader {
+        checkboardUniform: WebGLUniformLocation | null;
 
-            getCheckboardUniform(): WebGLUniformLocation | null;
-        }
+        getCheckboardUniform(): WebGLUniformLocation | null;
     }
 }
 

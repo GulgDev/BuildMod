@@ -18,5 +18,6 @@ module.exports = merge(common, {
                 exclude: /node_modules/
             }
         ]
-    }
+    },
+    watch: true
 });

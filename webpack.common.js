@@ -15,11 +15,12 @@ module.exports = {
         ]
     },
     resolve: {
-        extensions: [".ts"]
+        extensions: [".ts", ".js"],
+        modules: [path.resolve(__dirname, "./src")]
     },
     output: {
         filename: "bundle.js",
-        path: path.resolve(__dirname, "dist")
+        path: path.resolve(__dirname, "./dist")
     },
     optimization: {
         minimize: true,

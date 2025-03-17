@@ -1,4 +1,4 @@
-import { mixin } from "../../../mixin";
+import { mixin } from "mixin";
 
 mixin("BackgroundShader", (BackgroundShader) => class extends BackgroundShader {
     makeFragmentShader(): string {
