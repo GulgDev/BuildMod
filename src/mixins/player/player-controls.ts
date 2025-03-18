@@ -64,7 +64,7 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
                     const [x1, y1] = entity.points[i];
                     const [x2, y2] = entity.points[i + 1];
                     const d = Math.abs((y2 - y1) * (mouseX - 0.5) - (x2 - x1) * (mouseY - 0.5) + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
-                    if (d < 0.16) {
+                    if (d < 6.4 / game.scale) {
                         entity.points.splice(i + 1, 0, [x, y]);
                         this.activeWire = entity;
                         this.activePoint = i + 1;
@@ -82,21 +82,29 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
     private mouseUp = (ev: MouseEvent) => {
         if (ev.button !== 2) return;
         if (this.activeWire) {
-            if (
-                this.activePoint > 0 &&
-                this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint - 1][0] &&
-                this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint - 1][1]
-            )
-                this.activeWire.points.splice(this.activePoint - 1, 1);
-            if (
-                this.activePoint < this.activeWire.points.length - 1 &&
-                this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint + 1][0] &&
-                this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint + 1][1]
-            )
-                this.activeWire.points.splice(this.activePoint + 1, 1);
-            if (this.activeWire.points.length < 2) {
-                const game: Game = this["game"];
-                game.gameMap.entities.delete(this.activeWire);
+            while (this.activePoint < this.activeWire.points.length) {
+                let found = false;
+                if (
+                    this.activePoint > 0 &&
+                    this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint - 1][0] &&
+                    this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint - 1][1]
+                ) {
+                    this.activeWire.points.splice(this.activePoint - 1, 1);
+                    found = true;
+                }
+                if (
+                    this.activePoint < this.activeWire.points.length - 1 &&
+                    this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint + 1][0] &&
+                    this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint + 1][1]
+                ) {
+                    this.activeWire.points.splice(this.activePoint + 1, 1);
+                    found = true;
+                }
+                if (!found) break;
+                if (this.activeWire.points.length < 2) {
+                    const game: Game = this["game"];
+                    game.gameMap.entities.delete(this.activeWire);
+                }
             }
         }
         this.activeWire = null;

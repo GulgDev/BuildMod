@@ -59,9 +59,6 @@ export class Wire extends MapEntity {
                 return;
             }
         }
-        const [x, y] = this.points[this.points.length - 1];
-        if (this.gameMap.getArrowType(x, y) === 0)
-            this.gameMap.setArrowType(x, y, 23, false);
     }
 
     draw(game: Game, render: Render): void {
