@@ -1,7 +1,9 @@
 import "./game-logic/game-map";
 import "./player/game";
+import "./player/game-history";
 import "./player/player-access";
 import "./player/player-controls";
+import "./player/player-map-action";
 import "./player/player-settings";
 import "./rendering/render";
 import "./rendering/shaders/arrow-shader";

@@ -1,5 +1,6 @@
 import { BuildNotification, NotificationType } from "engine/build-system/notification";
-import { CELL_SIZE, CHUNK_SIZE, Arrow, Chunk, Render } from "logic-arrows";
+import { EntityChangeType } from "engine/entitites/map-entity-change";
+import { CELL_SIZE, CHUNK_SIZE, Arrow, Chunk, Render, PlayerMapAction } from "logic-arrows";
 import { mixin } from "mixin";
 
 declare module "logic-arrows" {
@@ -124,5 +125,39 @@ mixin("Game", (Game) => class extends Game {
         for (const entity of this.gameMap.entities)
             entity.draw(this, render);
         this.frame++;
+    }
+
+    public undoChanges(action: PlayerMapAction): void {
+        super.undoChanges(action);
+        action.changedEntities.toReversed().forEach((change) => {
+            switch (change.type) {
+                case EntityChangeType.SPAWNED:
+                    change.entity.dispose();
+                    break;
+                case EntityChangeType.REMOVED:
+                    change.entity.undispose();
+                    break;
+                case EntityChangeType.WIRE_MOVED:
+                    change.entity.points[change.point] = change.from;
+                    break;
+            }
+        });
+    }
+
+    public redoChanges(action: PlayerMapAction): void {
+        super.redoChanges(action);
+        action.changedEntities.forEach((change) => {
+            switch (change.type) {
+                case EntityChangeType.SPAWNED:
+                    change.entity.undispose();
+                    break;
+                case EntityChangeType.REMOVED:
+                    change.entity.dispose();
+                    break;
+                case EntityChangeType.WIRE_MOVED:
+                    change.entity.points[change.point] = change.to;
+                    break;
+            }
+        });
     }
 });

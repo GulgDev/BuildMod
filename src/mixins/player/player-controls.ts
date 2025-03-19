@@ -1,3 +1,4 @@
+import { EntityChangeType } from "engine/entitites/map-entity-change";
 import { Wire } from "engine/entitites/wire";
 import { CELL_SIZE, Game, GameHistory, KeyboardHandler, MouseHandler, PlayerUI } from "logic-arrows";
 import { mixin } from "mixin";
@@ -32,13 +33,17 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
     }
 
     private mouseMove = (ev: MouseEvent) => {
+        const history: GameHistory = this["history"];
         const [x, y] = this.screenToWorld(ev.x, ev.y);
-        for (const { wire, point } of this.movingWires)
+        for (const { wire, point } of this.movingWires) {
+            history.addEntityChange({ type: EntityChangeType.WIRE_MOVED, entity: wire, point: point, from: wire.points[point], to: [x, y] });
             wire.points[point] = [x, y];
+        }
     };
 
     private mouseDown = (ev: MouseEvent) => {
         const game: Game = this["game"];
+        const history: GameHistory = this["history"];
         const [x, y] = this.screenToWorld(ev.x, ev.y);
         switch (ev.button) {
             case 0:
@@ -59,17 +64,28 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
                 const wire = new Wire(game.gameMap);
                 wire.points = [[x, y], [x, y]];
                 this.movingWires = [{ wire, point: 1 }];
+                history.addEntityChange({ type: EntityChangeType.SPAWNED, entity: wire });
+                history.addEntityChange({ type: EntityChangeType.WIRE_MOVED, entity: wire, point: 0, from: [x, y], to: [x, y] });
+                history.addEntityChange({ type: EntityChangeType.WIRE_MOVED, entity: wire, point: 1, from: [x, y], to: [x, y] });
                 break;
         }
     };
 
     private mouseUp = (ev: MouseEvent) => {
+        const history: GameHistory = this["history"];
         switch (ev.button) {
             case 0:
             case 2:
                 if (this.movingWires.length > 0) {
                     ev.stopImmediatePropagation();
                     ev.stopPropagation();
+                    for (const { wire } of this.movingWires) {
+                        const [[x1, y1], [x2, y2]] = wire.points;
+                        if (x1 === x2 && y1 === y2) {
+                            history.addEntityChange({ type: EntityChangeType.REMOVED, entity: wire });
+                            wire.dispose();
+                        }
+                    }
                 }
                 this.movingWires = [];
                 break;
@@ -90,6 +106,7 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
         const playerUI: PlayerUI = this["playerUI"];
         if (!playerUI.isMenuOpen()) {
             const game: Game = this["game"];
+            const history: GameHistory = this["history"];
             const mouseHandler: MouseHandler = this["mouseHandler"];
             switch (code) {
                 case "KeyB":
@@ -103,14 +120,18 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
                     for (const entity of game.gameMap.entities) {
                         if (entity instanceof Wire) {
                             let [[x1, y1], [x2, y2]] = entity.points;
-                            if (x2 < x1) [x1, x2] = [x2, x1];
-                            if (y2 < y1) [y1, y2] = [y2, y1];
+                            const minX = Math.min(x1, x2);
+                            const maxX = Math.max(x1, x2);
+                            const minY = Math.min(y1, y2);
+                            const maxY = Math.max(y1, y2);
                             const maxD = 8 / game.scale;
-                            if (x < x1 - maxD || y < y1 - maxD || x > x2 + maxD || y > y2 + maxD)
+                            if (x < minX - maxD || y < minY - maxD || x > maxX + maxD || y > maxY + maxD)
                                 continue;
                             const d = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
-                            if (d < maxD)
+                            if (d < maxD) {
                                 entity.dispose();
+                                history.addEntityChange({ type: EntityChangeType.REMOVED, entity });
+                            }
                         }
                     }
                     break;

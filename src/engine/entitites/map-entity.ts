@@ -3,11 +3,15 @@ import { Reader, Writer } from "engine/util/serialization";
 
 export abstract class MapEntity {
     constructor(protected gameMap: GameMap) {
-        this.gameMap.entities.add(this);
+        this.undispose();
     }
 
     dispose(): void {
         this.gameMap.entities.delete(this);
+    }
+
+    undispose(): void {
+        this.gameMap.entities.add(this);
     }
 
     static deserialize(gameMap: GameMap, reader: Reader): MapEntity {
