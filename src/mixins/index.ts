@@ -1,4 +1,5 @@
 import "./game-logic/game-map";
+import "./pages/game-page";
 import "./player/game";
 import "./player/game-history";
 import "./player/player-access";
@@ -9,4 +10,5 @@ import "./rendering/render";
 import "./rendering/shaders/arrow-shader";
 import "./rendering/shaders/background-shader";
 import "./utils/load";
+import "./utils/routes";
 import "./utils/save";
