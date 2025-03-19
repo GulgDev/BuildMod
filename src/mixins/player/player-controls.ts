@@ -1,25 +1,24 @@
 import { Wire } from "engine/entitites/wire";
-import { CELL_SIZE, Game, GameHistory, KeyboardHandler, PlayerUI } from "logic-arrows";
+import { CELL_SIZE, Game, GameHistory, KeyboardHandler, MouseHandler, PlayerUI } from "logic-arrows";
 import { mixin } from "mixin";
 
 mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
-    private activeWire: Wire;
-    private activePoint: number;
+    private movingWires: { wire: Wire, point: number }[] = [];
 
     constructor(cnv: HTMLCanvasElement, game: Game, playerUI: PlayerUI, history: GameHistory | null = null) {
         super(cnv, game, playerUI, history);
         this["keyboardHandler"].keyDownCallback = this.customKeyDownCallback;
         document.addEventListener("mousemove", this.mouseMove);
-        document.addEventListener("mousedown", this.mouseDown);
-        document.addEventListener("mouseup", this.mouseUp);
+        document.addEventListener("mousedown", this.mouseDown, true);
+        document.addEventListener("mouseup", this.mouseUp, true);
         document.addEventListener("contextmenu", this.rightClick);
     }
 
     public dispose(): void {
         super.dispose();
         document.removeEventListener("mousemove", this.mouseMove);
-        document.removeEventListener("mousedown", this.mouseDown);
-        document.removeEventListener("mouseup", this.mouseUp);
+        document.removeEventListener("mousedown", this.mouseDown, true);
+        document.removeEventListener("mouseup", this.mouseUp, true);
         document.removeEventListener("contextmenu", this.rightClick);
     }
 
@@ -34,80 +33,47 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
 
     private mouseMove = (ev: MouseEvent) => {
         const [x, y] = this.screenToWorld(ev.x, ev.y);
-        if (this.activeWire) {
-            this.activeWire.points[this.activePoint] = [x, y];
-        }
+        for (const { wire, point } of this.movingWires)
+            wire.points[point] = [x, y];
     };
 
     private mouseDown = (ev: MouseEvent) => {
         const game: Game = this["game"];
         const [x, y] = this.screenToWorld(ev.x, ev.y);
-        const [mouseX, mouseY] = [
-            ev.x * window.devicePixelRatio / game.scale - game.offset[0] / CELL_SIZE,
-            ev.y * window.devicePixelRatio / game.scale - game.offset[1] / CELL_SIZE
-        ];
-        if (ev.button !== 2) return;
-        for (const entity of game.gameMap.entities) {
-            if (entity instanceof Wire) {
-                for (let i = 0; i < entity.points.length; i++) {
-                    if (entity.points[i][0] === x && entity.points[i][1] === y) {
-                        this.activeWire = entity;
-                        this.activePoint = i;
-                        return;
+        switch (ev.button) {
+            case 0:
+                if (!this["freeCursor"]) return;
+                for (const entity of game.gameMap.entities) {
+                    if (entity instanceof Wire) {
+                        for (let i = 0; i < entity.points.length; i++) {
+                            if (entity.points[i][0] === x && entity.points[i][1] === y) {
+                                ev.stopImmediatePropagation();
+                                ev.stopPropagation();
+                                this.movingWires.push({ wire: entity, point: i });
+                            }
+                        }
                     }
                 }
-            }
+                break;
+            case 2:
+                const wire = new Wire(game.gameMap);
+                wire.points = [[x, y], [x, y]];
+                this.movingWires = [{ wire, point: 1 }];
+                break;
         }
-        for (const entity of game.gameMap.entities) {
-            if (entity instanceof Wire) {
-                for (let i = 0; i < entity.points.length - 1; i++) {
-                    const [x1, y1] = entity.points[i];
-                    const [x2, y2] = entity.points[i + 1];
-                    const d = Math.abs((y2 - y1) * (mouseX - 0.5) - (x2 - x1) * (mouseY - 0.5) + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
-                    if (d < 6.4 / game.scale) {
-                        entity.points.splice(i + 1, 0, [x, y]);
-                        this.activeWire = entity;
-                        this.activePoint = i + 1;
-                        return;
-                    }
-                }
-            }
-        }
-        this.activeWire = new Wire(game.gameMap);
-        this.activeWire.points = [[x, y], [x, y]];
-        game.gameMap.entities.add(this.activeWire);
-        this.activePoint = 1;
     };
 
     private mouseUp = (ev: MouseEvent) => {
-        if (ev.button !== 2) return;
-        if (this.activeWire) {
-            while (this.activePoint < this.activeWire.points.length) {
-                let found = false;
-                if (
-                    this.activePoint > 0 &&
-                    this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint - 1][0] &&
-                    this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint - 1][1]
-                ) {
-                    this.activeWire.points.splice(this.activePoint - 1, 1);
-                    found = true;
+        switch (ev.button) {
+            case 0:
+            case 2:
+                if (this.movingWires.length > 0) {
+                    ev.stopImmediatePropagation();
+                    ev.stopPropagation();
                 }
-                if (
-                    this.activePoint < this.activeWire.points.length - 1 &&
-                    this.activeWire.points[this.activePoint][0] === this.activeWire.points[this.activePoint + 1][0] &&
-                    this.activeWire.points[this.activePoint][1] === this.activeWire.points[this.activePoint + 1][1]
-                ) {
-                    this.activeWire.points.splice(this.activePoint + 1, 1);
-                    found = true;
-                }
-                if (!found) break;
-                if (this.activeWire.points.length < 2) {
-                    const game: Game = this["game"];
-                    game.gameMap.entities.delete(this.activeWire);
-                }
-            }
+                this.movingWires = [];
+                break;
         }
-        this.activeWire = null;
     };
 
     private rightClick = (ev: MouseEvent) => {
@@ -121,14 +87,36 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
         if (metaPressed) {
             return;
         }
-        this["keyDownCallback"](code, key);
         const playerUI: PlayerUI = this["playerUI"];
-        if (playerUI.isMenuOpen()) return;
-        const game: Game = this["game"];
-        switch (code) {
-            case "KeyB":
-                game.build();
-                break;
+        if (!playerUI.isMenuOpen()) {
+            const game: Game = this["game"];
+            const mouseHandler: MouseHandler = this["mouseHandler"];
+            switch (code) {
+                case "KeyB":
+                    game.build();
+                    return;
+                case "KeyR": {
+                    const [x, y] = [
+                        mouseHandler.getMousePosition()[0] * window.devicePixelRatio / game.scale - game.offset[0] / CELL_SIZE - 0.5,
+                        mouseHandler.getMousePosition()[1] * window.devicePixelRatio / game.scale - game.offset[1] / CELL_SIZE - 0.5
+                    ];
+                    for (const entity of game.gameMap.entities) {
+                        if (entity instanceof Wire) {
+                            let [[x1, y1], [x2, y2]] = entity.points;
+                            if (x2 < x1) [x1, x2] = [x2, x1];
+                            if (y2 < y1) [y1, y2] = [y2, y1];
+                            const maxD = 8 / game.scale;
+                            if (x < x1 - maxD || y < y1 - maxD || x > x2 + maxD || y > y2 + maxD)
+                                continue;
+                            const d = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
+                            if (d < maxD)
+                                entity.dispose();
+                        }
+                    }
+                    break;
+                }
+            }
         }
+        this["keyDownCallback"](code, key);
     };
 });

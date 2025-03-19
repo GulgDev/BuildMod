@@ -1,4 +1,5 @@
 import { MapEntity } from "engine/entitites/map-entity";
+import { Reader } from "engine/util/serialization";
 import { Arrow, Chunk, GameMap } from "logic-arrows";
 import { mixin } from "mixin";
 
@@ -35,11 +36,8 @@ mixin("load", () => (map: GameMap, buffer: number[]): void => {
         }
     }
 
-    buffer = buffer.slice(index);
-    let entityCount = buffer.shift();
-    entityCount |= buffer.shift() << 8;
-    for (let i = 0; i < entityCount; i++) {
-        const entity = MapEntity.deserialize(map, buffer);
-        if (entity)map.entities.add(entity);
-    }
+    const reader = new Reader(buffer.slice(index));
+    const entityCount = reader.readU16();
+    for (let i = 0; i < entityCount; i++)
+        MapEntity.deserialize(map, reader);
 });

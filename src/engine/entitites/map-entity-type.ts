@@ -1,25 +1,18 @@
 import { GameMap } from "logic-arrows";
-import { Wire } from "./wire";
+import { Reader } from "engine/util/serialization";
 import { MapEntity } from "./map-entity";
+import { Wire } from "./wire";
 
 interface MapEntityConstructor {
-    new (gameMap: GameMap): MapEntity;
+    new (gameMap: GameMap, reader: Reader): MapEntity;
 }
 
-export enum MapEntityType {
-    WIRE
+const classes = () => <MapEntityConstructor[]>[Wire];
+
+export function getEntityType(entity: MapEntity): number {
+    return classes().indexOf(entity.constructor as MapEntityConstructor);
 }
 
-export function getEntityType(entity: MapEntity): MapEntityType {
-    if (entity instanceof Wire) return MapEntityType.WIRE;
-    else return undefined;
-}
-
-export function getEntityClass(entity: MapEntityType): MapEntityConstructor {
-    switch (entity) {
-        case MapEntityType.WIRE:
-            return Wire;
-        default:
-            return undefined;
-    }
+export function getEntityClass(entity: number): MapEntityConstructor {
+    return classes()[entity];
 }

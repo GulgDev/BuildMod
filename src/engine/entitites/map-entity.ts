@@ -1,23 +1,35 @@
 import { Game, GameMap, Render } from "logic-arrows";
+import { Reader, Writer } from "engine/util/serialization";
 
 export abstract class MapEntity {
-    constructor(protected gameMap: GameMap) {}
+    constructor(protected gameMap: GameMap) {
+        this.gameMap.entities.add(this);
+    }
 
-    static deserialize(gameMap: GameMap, buffer: number[]): MapEntity {
-        const clazz = getEntityClass(buffer.shift());
-        if (!clazz) return undefined;
-        const entity = new clazz(gameMap);
-        entity.readFromBuffer(buffer);
+    dispose(): void {
+        this.gameMap.entities.delete(this);
+    }
+
+    static deserialize(gameMap: GameMap, reader: Reader): MapEntity {
+        const constructor = getEntityClass(reader.readU8());
+        if (!constructor) return undefined;
+        const entity = new constructor(gameMap, reader);
+        entity.readState(reader);
         return entity;
     }
 
-    protected abstract readFromBuffer(buffer: number[]): void;
+    serialize(writer: Writer): void {
+        writer.writeU8(getEntityType(this));
+        this.writeState(writer);
+    }
 
-    abstract serialize(buffer: number[]): void;
+    protected abstract readState(reader: Reader): void;
+
+    protected abstract writeState(writer: Writer): void;
 
     abstract build(game: Game): void;
 
     abstract draw(game: Game, render: Render): void;
 }
 
-import { getEntityClass } from "./map-entity-type";
+import { getEntityClass, getEntityType } from "./map-entity-type";

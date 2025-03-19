@@ -318,7 +318,7 @@ export class PathTracer {
 
     trace(x1: number, y1: number, x2: number, y2: number): boolean {
         const arrow = this.gameMap.getArrow(x1, y1);
-        const sources = getTargettedArrows(arrow, x1, y1);
+        const sources = getTargettedArrows(arrow, x1, y1).filter(([x, y]) => this.gameMap.getArrowType(x, y) === 0);
         const path = this.findPath([x1, y1], sources, [x2, y2]);
         if (!path) return false;
         this.tracePath(path);
