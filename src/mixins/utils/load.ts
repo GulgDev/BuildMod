@@ -1,6 +1,6 @@
 import { MapEntity } from "engine/entitites/map-entity";
 import { Reader } from "engine/util/serialization";
-import { Arrow, Chunk, GameMap } from "logic-arrows";
+import { Arrow, Chunk, CHUNK_SIZE, GameMap } from "logic-arrows";
 import { mixin } from "mixin";
 
 mixin("load", () => (map: GameMap, buffer: number[]): void => {
@@ -40,4 +40,13 @@ mixin("load", () => (map: GameMap, buffer: number[]): void => {
     const entityCount = reader.readU16();
     for (let i = 0; i < entityCount; i++)
         MapEntity.deserialize(map, reader);
+    for (let i = 0; i < chunksCount; i++) {
+        const [chunkX, chunkY] = reader.readChunkCoords();
+        const mask = reader.read(CHUNK_SIZE * CHUNK_SIZE / 8);
+        const chunkMask: boolean[] = [];
+        for (let i = 0; i < mask.length; ++i)
+            for (let j = 7; j >= 0; --j)
+                chunkMask.push(!!(mask[i] >> j));
+        map.getChunk(chunkX, chunkY).mask = chunkMask;
+    }
 });

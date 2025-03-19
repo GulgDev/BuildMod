@@ -1,3 +1,4 @@
+import "./game-logic/chunk";
 import "./game-logic/game-map";
 import "./pages/game-page";
 import "./player/game";

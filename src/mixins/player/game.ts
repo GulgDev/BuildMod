@@ -8,6 +8,8 @@ declare module "logic-arrows" {
         notify(type: NotificationType, x: number, y: number, message: string): void;
 
         build(): void;
+
+        clean(): void;
     }
 }
 
@@ -33,11 +35,28 @@ mixin("Game", (Game) => class extends Game {
     }
 
     public build(): void {
+        this.clean();
+        for (const entity of this.gameMap.entities)
+            entity.build(this);
+    }
+
+    public clean(): void {
         for (const notification of this.notifications)
             notification.dispose();
         this.notifications.clear();
-        for (const entity of this.gameMap.entities)
-            entity.build(this);
+        this.gameMap.chunks.forEach((chunk) => {
+            for (let y = 0; y < CHUNK_SIZE; ++y)
+                for (let x = 0; x < CHUNK_SIZE; ++x) {
+                    const arrow = chunk.getArrow(x, y);
+                    if (!chunk.mask[y * CHUNK_SIZE + x]) {
+                        arrow.type = 0;
+                        arrow.signal = 0;
+                        arrow.signalsCount = 0;
+                        arrow.rotation = 0;
+                        arrow.flipped = false;
+                    }
+                }
+        });
     }
 
     public draw(): void {
@@ -63,11 +82,13 @@ mixin("Game", (Game) => class extends Game {
             for (let i: number = 0; i < CHUNK_SIZE; i++) {
                 for (let j: number = 0; j < CHUNK_SIZE; j++) {
                     const arrow: Arrow = chunk.getArrow(i, j);
+                    const mask: boolean = chunk.mask[j * CHUNK_SIZE + i];
                     if (arrow.type > 0) {
                         const arrowX: number = chunk.x * CHUNK_SIZE + i;
                         const arrowY: number = chunk.y * CHUNK_SIZE + j;
                         const x: number = arrowX * this.scale + arrowOffsetX;
                         const y: number = arrowY * this.scale + arrowOffsetY;
+                        render.setArrowAlpha(mask ? 1.0 : 0.8);
                         render.drawArrow(x, y, arrow.type, arrow.signal, arrow.rotation, arrow.flipped, (arrowX + arrowY + 1) % 2);
                     }
                 }

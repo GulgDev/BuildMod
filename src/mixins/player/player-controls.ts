@@ -23,6 +23,37 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
         document.removeEventListener("contextmenu", this.rightClick);
     }
 
+    public update(): void {
+        super.update();
+        const game: Game = this["game"];
+        const history: GameHistory = this["history"];
+        const mouseHandler: MouseHandler = this["mouseHandler"];
+        const keyboardHandler: KeyboardHandler = this["keyboardHandler"];
+        if (keyboardHandler.getKeyPressed("KeyR")) {
+            const [x, y] = [
+                mouseHandler.getMousePosition()[0] * window.devicePixelRatio / game.scale - game.offset[0] / CELL_SIZE - 0.5,
+                mouseHandler.getMousePosition()[1] * window.devicePixelRatio / game.scale - game.offset[1] / CELL_SIZE - 0.5
+            ];
+            for (const entity of game.gameMap.entities) {
+                if (entity instanceof Wire) {
+                    let [[x1, y1], [x2, y2]] = entity.points;
+                    const minX = Math.min(x1, x2);
+                    const maxX = Math.max(x1, x2);
+                    const minY = Math.min(y1, y2);
+                    const maxY = Math.max(y1, y2);
+                    const maxD = 8 / game.scale;
+                    if (x < minX - maxD || y < minY - maxD || x > maxX + maxD || y > maxY + maxD)
+                        continue;
+                    const d = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
+                    if (d < maxD) {
+                        entity.dispose();
+                        history.addEntityChange({ type: EntityChangeType.REMOVED, entity });
+                    }
+                }
+            }
+        }
+    }
+
     private screenToWorld(x: number, y: number): [number, number] {
         const game: Game = this["game"];
         const mouseFloatX: number = x * window.devicePixelRatio / game.scale - game.offset[0] / CELL_SIZE;
@@ -106,36 +137,13 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
         const playerUI: PlayerUI = this["playerUI"];
         if (!playerUI.isMenuOpen()) {
             const game: Game = this["game"];
-            const history: GameHistory = this["history"];
-            const mouseHandler: MouseHandler = this["mouseHandler"];
             switch (code) {
                 case "KeyB":
                     game.build();
                     return;
-                case "KeyR": {
-                    const [x, y] = [
-                        mouseHandler.getMousePosition()[0] * window.devicePixelRatio / game.scale - game.offset[0] / CELL_SIZE - 0.5,
-                        mouseHandler.getMousePosition()[1] * window.devicePixelRatio / game.scale - game.offset[1] / CELL_SIZE - 0.5
-                    ];
-                    for (const entity of game.gameMap.entities) {
-                        if (entity instanceof Wire) {
-                            let [[x1, y1], [x2, y2]] = entity.points;
-                            const minX = Math.min(x1, x2);
-                            const maxX = Math.max(x1, x2);
-                            const minY = Math.min(y1, y2);
-                            const maxY = Math.max(y1, y2);
-                            const maxD = 8 / game.scale;
-                            if (x < minX - maxD || y < minY - maxD || x > maxX + maxD || y > maxY + maxD)
-                                continue;
-                            const d = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / Math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2);
-                            if (d < maxD) {
-                                entity.dispose();
-                                history.addEntityChange({ type: EntityChangeType.REMOVED, entity });
-                            }
-                        }
-                    }
-                    break;
-                }
+                case "KeyM":
+                    game.clean();
+                    return;
             }
         }
         this["keyDownCallback"](code, key);

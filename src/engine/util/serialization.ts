@@ -45,9 +45,12 @@ export class Reader extends IO {
         return signed;
     }
 
+    readChunkCoords(): [number, number] {
+        return [this.readS16(), this.readS16()];
+    }
+
     readPosition(): [number, number] {
-        const chunkX = this.readS16();
-        const chunkY = this.readS16();
+        const [chunkX, chunkY] = this.readChunkCoords();
         const position = this.readU8();
         const arrowX = position & 0xF;
         const arrowY = position >> 4;
@@ -56,6 +59,10 @@ export class Reader extends IO {
 }
 
 export class Writer extends IO {
+    write(values: number[]): void {
+        this.writeU8(...values);
+    }
+
     writeU8(...values: number[]): void {
         this.buffer.push(...values.map(value => value & 0xFF));
     }
@@ -80,12 +87,16 @@ export class Writer extends IO {
         this.writeU32(...values.map(value => value < 0 ? (-value) | 0x80000000 : value & 0x7FFFFFFF));
     }
 
+    writeChunkCoords(x: number, y: number) {
+        this.writeS16(x, y);
+    }
+
     writePosition(x: number, y: number): void {
         const chunkX = Math.floor(x / CHUNK_SIZE);
         const chunkY = Math.floor(y / CHUNK_SIZE);
         const arrowX = x - chunkX * CHUNK_SIZE;
         const arrowY = y - chunkY * CHUNK_SIZE;
-        this.writeS16(chunkX, chunkY);
+        this.writeChunkCoords(chunkX, chunkY);
         this.writeU8(arrowX | (arrowY << 4));
     }
 }
