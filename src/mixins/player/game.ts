@@ -48,7 +48,7 @@ mixin("Game", (Game) => class extends Game {
             for (let y = 0; y < CHUNK_SIZE; ++y)
                 for (let x = 0; x < CHUNK_SIZE; ++x) {
                     const arrow = chunk.getArrow(x, y);
-                    if (!chunk.mask[y * CHUNK_SIZE + x]) {
+                    if (!arrow.mask) {
                         arrow.type = 0;
                         arrow.signal = 0;
                         arrow.signalsCount = 0;
@@ -82,13 +82,12 @@ mixin("Game", (Game) => class extends Game {
             for (let i: number = 0; i < CHUNK_SIZE; i++) {
                 for (let j: number = 0; j < CHUNK_SIZE; j++) {
                     const arrow: Arrow = chunk.getArrow(i, j);
-                    const mask: boolean = chunk.mask[j * CHUNK_SIZE + i];
                     if (arrow.type > 0) {
                         const arrowX: number = chunk.x * CHUNK_SIZE + i;
                         const arrowY: number = chunk.y * CHUNK_SIZE + j;
                         const x: number = arrowX * this.scale + arrowOffsetX;
                         const y: number = arrowY * this.scale + arrowOffsetY;
-                        render.setArrowAlpha(mask ? 1.0 : 0.8);
+                        render.setArrowAlpha(arrow.mask ? 1.0 : 0.8);
                         render.drawArrow(x, y, arrow.type, arrow.signal, arrow.rotation, arrow.flipped, (arrowX + arrowY + 1) % 2);
                     }
                 }
@@ -149,7 +148,18 @@ mixin("Game", (Game) => class extends Game {
     }
 
     public undoChanges(action: PlayerMapAction): void {
-        super.undoChanges(action);
+        action.changedArrows.forEach(([oldData, _], key) => {
+            const [x, y] = key.split(",").map((s) => parseInt(s));
+            if (oldData.type === 0) {
+                this.gameMap.removeArrow(x, y, oldData.mask);
+                this.selectedMap.deselect(x, y);
+            } else {
+                this.gameMap.resetArrow(x, y, oldData.mask);
+                this.gameMap.setArrowType(x, y, oldData.type, oldData.mask);
+                this.gameMap.setArrowRotation(x, y, oldData.rotation, oldData.mask);
+                this.gameMap.setArrowFlipped(x, y, oldData.flipped, oldData.mask);
+            }
+        });
         action.changedEntities.toReversed().forEach((change) => {
             switch (change.type) {
                 case EntityChangeType.SPAWNED:
@@ -166,7 +176,18 @@ mixin("Game", (Game) => class extends Game {
     }
 
     public redoChanges(action: PlayerMapAction): void {
-        super.redoChanges(action);
+        action.changedArrows.forEach(([_, newData], key) => {
+            const [x, y] = key.split(",").map((s) => parseInt(s));
+            if (newData.type === 0) {
+                this.gameMap.removeArrow(x, y, newData.mask);
+                this.selectedMap.deselect(x, y);
+            } else {
+                this.gameMap.resetArrow(x, y, newData.mask);
+                this.gameMap.setArrowType(x, y, newData.type, newData.mask);
+                this.gameMap.setArrowRotation(x, y, newData.rotation, newData.mask);
+                this.gameMap.setArrowFlipped(x, y, newData.flipped, newData.mask);
+            }
+        });
         action.changedEntities.forEach((change) => {
             switch (change.type) {
                 case EntityChangeType.SPAWNED:

@@ -5,6 +5,10 @@ abstract class IO {
 }
 
 export class Reader extends IO {
+    get available(): boolean {
+        return this.buffer.length > 0;
+    }
+
     read(count: number): number[] {
         return this.buffer.splice(0, count);
     }
@@ -49,11 +53,14 @@ export class Reader extends IO {
         return [this.readS16(), this.readS16()];
     }
 
+    readArrowPosition(): [number, number] {
+        const position = this.readU8();
+        return [position & 0xF, position >> 4];
+    }
+
     readPosition(): [number, number] {
         const [chunkX, chunkY] = this.readChunkCoords();
-        const position = this.readU8();
-        const arrowX = position & 0xF;
-        const arrowY = position >> 4;
+        const [arrowX, arrowY] = this.readArrowPosition();
         return [chunkX * CHUNK_SIZE + arrowX, chunkY * CHUNK_SIZE + arrowY];
     }
 }
@@ -91,12 +98,16 @@ export class Writer extends IO {
         this.writeS16(x, y);
     }
 
+    writeArrowPosition(x: number, y: number): void {
+        this.writeU8(x | (y << 4));
+    }
+
     writePosition(x: number, y: number): void {
         const chunkX = Math.floor(x / CHUNK_SIZE);
         const chunkY = Math.floor(y / CHUNK_SIZE);
         const arrowX = x - chunkX * CHUNK_SIZE;
         const arrowY = y - chunkY * CHUNK_SIZE;
         this.writeChunkCoords(chunkX, chunkY);
-        this.writeU8(arrowX | (arrowY << 4));
+        this.writeArrowPosition(arrowX, arrowY);
     }
 }

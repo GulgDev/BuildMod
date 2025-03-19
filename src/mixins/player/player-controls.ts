@@ -1,6 +1,7 @@
 import { EntityChangeType } from "engine/entitites/map-entity-change";
 import { Wire } from "engine/entitites/wire";
-import { CELL_SIZE, Game, GameHistory, KeyboardHandler, MouseHandler, PlayerUI } from "logic-arrows";
+import { ArrowDataExt } from "engine/util/arrow-data";
+import { ArrowData, CELL_SIZE, Game, GameHistory, KeyboardHandler, MouseHandler, PlayerAccess, PlayerSettings, PlayerUI } from "logic-arrows";
 import { mixin } from "mixin";
 
 mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
@@ -8,6 +9,11 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
 
     constructor(cnv: HTMLCanvasElement, game: Game, playerUI: PlayerUI, history: GameHistory | null = null) {
         super(cnv, game, playerUI, history);
+
+        this["setArrows"] = this.customSetArrows;
+        this["deleteArrow"] = this.customDeleteArrow;
+        this["deleteSelectedArrows"] = this.customDeleteSelectedArrows;
+
         this["keyboardHandler"].keyDownCallback = this.customKeyDownCallback;
         document.addEventListener("mousemove", this.mouseMove);
         document.addEventListener("mousedown", this.mouseDown, true);
@@ -52,6 +58,53 @@ mixin("PlayerControls", (PlayerControls) => class extends PlayerControls {
                 }
             }
         }
+    }
+
+    private customSetArrows(mouseX: number, mouseY: number): void {
+        const game: Game = this["game"];
+        const history: GameHistory = this["history"];
+        const playerAccess: PlayerAccess = this["playerAccess"];
+        if (!playerAccess.canSetArrows) return;
+        game.selectedMap.getCopiedArrows().forEach((arrow, arrowKey) => {
+            if (PlayerSettings.levelArrows.includes(arrow.type)) return;
+            const [x, y] = arrowKey.split(",").map((value) => parseInt(value));
+            const arrowOld = ArrowData.fromArrow(game.gameMap.getArrow(mouseX + x, mouseY + y));
+            const arrowNew = (<typeof ArrowDataExt>ArrowData).fromState(arrow.type, arrow.rotation, arrow.flipped, arrow.mask);
+            if (history !== null) history.addChange(mouseX + x, mouseY + y, arrowOld, arrowNew);
+            game.gameMap.setArrowType(mouseX + x, mouseY + y, arrow.type);
+            game.gameMap.setArrowRotation(mouseX + x, mouseY + y, arrow.rotation);
+            game.gameMap.setArrowFlipped(mouseX + x, mouseY + y, arrow.flipped);
+        });
+    }
+
+    private customDeleteArrow(x: number, y: number): void {
+        const game: Game = this["game"];
+        const history: GameHistory = this["history"];
+        const playerAccess: PlayerAccess = this["playerAccess"];
+        if (!playerAccess.canDelete) return;
+        const arrowOld = ArrowData.fromArrow(game.gameMap.getArrow(x, y));
+        const arrowNew = (<typeof ArrowDataExt>ArrowData).fromState(0, 0, false, true);
+        if (history !== null) history.addChange(x, y, arrowOld, arrowNew);
+        game.gameMap.removeArrow(x, y);
+        game.selectedMap.deselect(x, y);
+        game.screenUpdated = true;
+    }
+    
+    private customDeleteSelectedArrows(): void {
+        const game: Game = this["game"];
+        const history: GameHistory = this["history"];
+        const playerAccess: PlayerAccess = this["playerAccess"];
+        if (!playerAccess.canDelete) return;
+        const selectedArrows = game.selectedMap.getSelectedArrows();
+        selectedArrows.forEach((key: string) => {
+          const [x, y] = key.split(",").map((value) => parseInt(value));
+          const arrowOld = ArrowData.fromArrow(game.gameMap.getArrow(x, y));
+          const arrowNew = (<typeof ArrowDataExt>ArrowData).fromState(0, 0, false, true);
+          if (history !== null) history.addChange(x, y, arrowOld, arrowNew);
+          game.gameMap.removeArrow(x, y);
+        });
+        game.selectedMap.clear();
+        game.screenUpdated = true;
     }
 
     private screenToWorld(x: number, y: number): [number, number] {

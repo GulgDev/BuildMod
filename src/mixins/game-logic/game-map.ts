@@ -37,6 +37,6 @@ mixin("GameMap", (GameMap) => class extends GameMap {
         if (player && PlayerSettings.levelArrows.includes(arrow.type)) return;
         if (arrow.type !== type) arrow.signal = 0;
         arrow.type = type;
-        chunk.mask[arrowY * CHUNK_SIZE + arrowX] = player;
+        arrow.mask = player;
     }
 });
